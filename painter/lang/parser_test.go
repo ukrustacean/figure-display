@@ -11,53 +11,68 @@ import (
 )
 
 func TestParser_Parse(t *testing.T) {
-	input := `
+	testInput := `
 white
 green
 update
-bgrect 10 20 30 40
-figure 50 60
-move 70 80
+bgrect 25 35 75 85
+figure 120 140
+move 90 110
 reset
 invalid
 bgrect wrong args
 `
 
-	parser := lang.Parser{}
-	ops, err := parser.Parse(strings.NewReader(input))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	p := lang.Parser{}
+	operations, parseErr := p.Parse(strings.NewReader(testInput))
+	
+	if parseErr != nil {
+		t.Fatalf("parsing failed unexpectedly: %v", parseErr)
 	}
 
-	if len(ops) != 7 {
-		t.Fatalf("expected 7 operations, got %d", len(ops))
+	expectedOpCount := 7
+	if actualCount := len(operations); actualCount != expectedOpCount {
+		t.Fatalf("operation count mismatch: expected %d, actual %d", expectedOpCount, actualCount)
 	}
 
-	if cf, ok := ops[0].(painter.ColorFill); !ok || cf.Color != color.White {
-		t.Errorf("expected ColorFill with white, got %+v", ops[0])
+	// Verify white color operation
+	colorFillOp, isColorFill := operations[0].(painter.ColorFill)
+	if !isColorFill || colorFillOp.Color != color.White {
+		t.Errorf("first operation should be white ColorFill, found %+v", operations[0])
 	}
 
-	if cf, ok := ops[1].(painter.ColorFill); !ok || cf.Color != (color.RGBA{G: 0xff, A: 0xff}) {
-		t.Errorf("expected ColorFill with green, got %+v", ops[1])
+	// Verify green color operation
+	greenColorOp, isGreenColorFill := operations[1].(painter.ColorFill)
+	expectedGreen := color.RGBA{G: 0xff, A: 0xff}
+	if !isGreenColorFill || greenColorOp.Color != expectedGreen {
+		t.Errorf("second operation should be green ColorFill, found %+v", operations[1])
 	}
 
-	if ops[2] != painter.UpdateOp {
-		t.Errorf("expected UpdateOp, got %+v", ops[2])
+	// Verify update operation
+	if operations[2] != painter.UpdateOp {
+		t.Errorf("third operation should be UpdateOp, found %+v", operations[2])
 	}
 
-	if bg, ok := ops[3].(painter.BgRect); !ok || bg.X1 != 10 || bg.Y1 != 20 || bg.X2 != 30 || bg.Y2 != 40 {
-		t.Errorf("expected BgRect with coords, got %+v", ops[3])
+	// Verify background rectangle operation
+	bgRectOp, isBgRect := operations[3].(painter.BgRect)
+	if !isBgRect || bgRectOp.X1 != 25 || bgRectOp.Y1 != 35 || bgRectOp.X2 != 75 || bgRectOp.Y2 != 85 {
+		t.Errorf("fourth operation should be BgRect(25,35,75,85), found %+v", operations[3])
 	}
 
-	if fig, ok := ops[4].(painter.Figure); !ok || fig.X != 50 || fig.Y != 60 {
-		t.Errorf("expected Figure, got %+v", ops[4])
+	// Verify figure operation
+	figureOp, isFigure := operations[4].(painter.Figure)
+	if !isFigure || figureOp.X != 120 || figureOp.Y != 140 {
+		t.Errorf("fifth operation should be Figure(120,140), found %+v", operations[4])
 	}
 
-	if mv, ok := ops[5].(painter.Move); !ok || mv.X != 70 || mv.Y != 80 {
-		t.Errorf("expected Move, got %+v", ops[5])
+	// Verify move operation
+	moveOp, isMove := operations[5].(painter.Move)
+	if !isMove || moveOp.X != 90 || moveOp.Y != 110 {
+		t.Errorf("sixth operation should be Move(90,110), found %+v", operations[5])
 	}
 
-	if _, ok := ops[6].(painter.Reset); !ok {
-		t.Errorf("expected Reset, got %+v", ops[6])
+	// Verify reset operation
+	if _, isReset := operations[6].(painter.Reset); !isReset {
+		t.Errorf("seventh operation should be Reset, found %+v", operations[6])
 	}
 }
