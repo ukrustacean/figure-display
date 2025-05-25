@@ -1,4 +1,4 @@
-module github.com/roman-mazur/architecture-lab-3
+module github.com/ukrustacean/figure-display
 
 go 1.24
 
